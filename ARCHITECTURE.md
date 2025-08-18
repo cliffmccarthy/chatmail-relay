@@ -3,6 +3,7 @@ overview as of mid-August 2025:
 
 ```mermaid
 graph LR;
+    cmdeploy --- sshd;
     letsencrypt --- acmetool-redirector;
     acmetool-redirector --- nginx;
     nginx --- |8443|nginx:internal;
@@ -28,7 +29,6 @@ graph LR;
     doveauth --- Users:/home/vmail/mail;
     expunge --- Users:/home/vmail/mail;
     chatmail-metadata --- iroh-relay;
-    cmdeploy --- sshd;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
