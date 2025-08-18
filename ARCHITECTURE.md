@@ -16,7 +16,7 @@ graph LR;
     nginx --> certs;
     nginx --> newemail.py;
     nginx --> |465|postfix;
-    nginx --> autoconfig.xml;
+    nginx(internal) --> autoconfig.xml;
     nginx --> |993|dovecot;
     autoconfig.xml --> postfix;
     autoconfig.xml --> dovecot;
