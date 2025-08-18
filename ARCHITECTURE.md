@@ -4,9 +4,8 @@ overview as of mid-August 2025:
 ```mermaid
 graph LR;
     cmdeploy --- sshd;
-    letsencrypt --- acmetool-redirector;
-    acmetool-redirector --- port80r@{ shape: text, label: "port 80" };
-    port80l@{ shape: text, label: "port 80" } --- nginx;
+    letsencrypt --- |80|acmetool-redirector;
+    acmetool-redirector --- nginx-right@[nginx];
     nginx --- |8443|nginx-internal[nginx - internal];
     nginx-internal --- certs-nginx[TLS certs - /var/lib/acme];
     nginx-internal --- website[Website - /var/www/html];
@@ -37,6 +36,8 @@ graph LR;
     style certs-nginx fill:#ff6;
     style certs-postfix fill:#ff6;
     style certs-dovecot fill:#ff6;
+    style nginx fill:#f86;
+    style nginx-right fill:#f86;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
