@@ -14,7 +14,7 @@ graph LR;
     nginx --> |8443|nginx(internal);
     nginx(internal) --> /var/www/html;
     nginx --> certs;
-    nginx --> newemail.py;
+    nginx(internal) --> newemail.py;
     nginx --> |465|postfix;
     nginx(internal) --> autoconfig.xml;
     nginx --> |993|dovecot;
