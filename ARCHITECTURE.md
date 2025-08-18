@@ -14,7 +14,7 @@ graph LR;
     /var/www/html`"];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
-    nginx-internal ~~~ certs-nginx[("`TLS certs
+    certs-nginx[("`TLS certs
     /var/lib/acme`")] --> nginx-internal;
     cron --- acmetool;
     cron --- chatmail-metrics;
