@@ -7,7 +7,6 @@ graph LR;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right(["`nginx
     (external)`"]);
-    nginx-external --- |465|postfix;
     nginx-external(["`nginx
     (external)`"]) --- |8443|nginx-internal["`nginx
     (internal)`"];
@@ -25,6 +24,7 @@ graph LR;
     /var/lib/acme`")];
     nginx-external --- |993|dovecot;
     autoconfig.xml --- postfix;
+    nginx-external --- |465|postfix;
     autoconfig.xml --- dovecot;
     postfix --- echobot;
     postfix --- |10080,10081|filtermail;
