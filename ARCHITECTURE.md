@@ -5,7 +5,8 @@ overview as of mid-August 2025:
 graph LR;
     cmdeploy --- sshd;
     letsencrypt --- acmetool-redirector;
-    acmetool-redirector --- nginx;
+    acmetool-redirector --- |80|port80r@{ shape: framed-circle, label: "80" };
+    port80l@{ shape: framed-circle, label: "80" } --- |80|nginx;
     nginx --- |8443|nginx:internal;
     nginx:internal --- Website:/var/www/html;
     nginx:internal --- newemail.py;
