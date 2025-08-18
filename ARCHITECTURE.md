@@ -7,7 +7,7 @@ graph LR;
     letsencrypt --- acmetool-redirector;
     acmetool-redirector --- port80r@{ shape: text, label: "port 80" };
     port80l@{ shape: text, label: "port 80" } --- nginx;
-    nginx --- |8443|nginx-internal;
+    nginx --- |8443|nginx-internal[nginx (internal)];
     nginx-internal --- website[Website - /var/www/html];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
