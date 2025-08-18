@@ -30,7 +30,7 @@ graph LR;
     doveauth --- Users:/home/vmail/mail;
     expunge --- Users:/home/vmail/mail;
     chatmail-metadata --- iroh-relay;
-    style certs fill:#f8f;
+    style certs fill:#ff6;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
