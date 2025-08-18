@@ -6,8 +6,8 @@ graph LR;
     cmdeploy --- sshd;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right{{nginx}};
-    nginx --- |8443|nginx-internal{{"`nginx
-    (internal)`"}};
+    nginx --- |8443|nginx-internal["`nginx
+    (internal)`"];
     nginx-internal --- website["`Website
     /var/www/html`"];
     nginx-internal --- newemail.py;
