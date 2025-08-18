@@ -20,7 +20,7 @@ graph LR;
     nginx --- |993|dovecot;
     autoconfig.xml --- postfix;
     autoconfig.xml --- dovecot;
-    postfix --- certs-postfix[TLS certs - /var/lib/acme];
+    postfix ~~~ certs-postfix[TLS certs - /var/lib/acme] --> postfix;
     postfix --- echobot;
     postfix --- |10080,10081|filtermail;
     postfix --- users[User data - home/vmail/mail];
