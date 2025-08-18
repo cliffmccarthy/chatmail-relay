@@ -42,6 +42,6 @@ graph LR;
     style nginx-right fill:#f86;
 ```
 
-(Arrows in this diagram do not have a specific formal meaning; they
-signify "depends on", or "uses", or "sends data to", or just "relates
-to".)
+The edges in this graph should not be taken too literally; they
+reflect some sort of communication path or dependency relationship
+between components of the chatmail server.
