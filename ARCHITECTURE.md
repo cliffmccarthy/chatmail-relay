@@ -7,10 +7,10 @@ graph LR;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right(["`nginx
     (external)`"]);
+    nginx-external --- |465|postfix;
     nginx-external(["`nginx
     (external)`"]) --- |8443|nginx-internal["`nginx
     (internal)`"];
-    nginx-external --- |465|postfix;
     nginx-internal --- website["`Website
     /var/www/html`"];
     nginx-internal --- newemail.py;
