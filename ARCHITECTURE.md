@@ -15,7 +15,7 @@ graph LR;
     cron --- chatmail-metrics;
     cron --- expunge;
     chatmail-metrics --- website;
-    acmetool --- certs;
+    acmetool --- certs[TLS certs - /var/lib/acme];
     nginx --- |465|postfix;
     nginx --- |993|dovecot;
     autoconfig.xml --- postfix;
