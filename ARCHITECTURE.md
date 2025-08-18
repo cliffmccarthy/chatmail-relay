@@ -8,7 +8,6 @@ graph LR;
     acmetool-redirector --- |443|nginx-right[nginx];
     nginx --- |8443|nginx-internal[nginx - internal];
     nginx-internal ~~~ certs-nginx[TLS certs - /var/lib/acme] --> nginx-internal;
-    certs-nginx ~~~ nginx-internal;
     nginx-internal --- website[Website - /var/www/html];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
