@@ -29,12 +29,14 @@ graph LR;
     dovecot --- |doveauth.socket|doveauth;
     dovecot --- users;
     dovecot --- |metadata.socket|chatmail-metadata;
+    dovecot --- certs-dovecot[TLS certs - /var/lib/acme];
     doveauth --- users;
     expunge --- users;
     chatmail-metadata --- iroh-relay;
     style certs fill:#ff6;
     style certs-nginx fill:#ff6;
     style certs-postfix fill:#ff6;
+    style certs-dovecot fill:#ff6;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
