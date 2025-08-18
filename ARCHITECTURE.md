@@ -21,6 +21,7 @@ graph LR;
     nginx --- |993|dovecot;
     autoconfig.xml --- postfix;
     autoconfig.xml --- dovecot;
+    postfix --- certs-postfix[TLS certs - /var/lib/acme];
     postfix --- users[User data - home/vmail/mail];
     postfix --- |10080,10081|filtermail;
     postfix --- echobot;
@@ -33,6 +34,7 @@ graph LR;
     chatmail-metadata --- iroh-relay;
     style certs fill:#ff6;
     style certs-nginx fill:#ff6;
+    style certs-postfix fill:#ff6;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
