@@ -17,8 +17,8 @@ graph LR;
     nginx-internal --- autoconfig.xml;
     certs-nginx[("`TLS certs
     /var/lib/acme`")] --> nginx-internal;
-    cron --- acmetool;
     cron --- chatmail-metrics;
+    cron --- acmetool;
     cron --- expunge;
     chatmail-metrics --- website;
     acmetool --> certs[("`TLS certs
