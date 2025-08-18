@@ -8,6 +8,7 @@ graph LR;
     acmetool-redirector --- port80r@{ shape: text, label: "port 80" };
     port80l@{ shape: text, label: "port 80" } --- nginx;
     nginx --- |8443|nginx-internal[nginx (internal)];
+    nginx-internal --- certs-nginx[TLS certs - /var/lib/acme];
     nginx-internal --- website[Website - /var/www/html];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
@@ -31,6 +32,7 @@ graph LR;
     expunge --- users;
     chatmail-metadata --- iroh-relay;
     style certs fill:#ff6;
+    style certs-nginx fill:#ff6;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
