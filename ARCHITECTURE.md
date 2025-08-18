@@ -6,24 +6,27 @@ graph LR;
     cmdeploy --- sshd;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right[nginx];
-    nginx --- |8443|nginx-internal[nginx - internal];
+    nginx --- |8443|nginx-internal["nginx (internal)"];
     nginx-internal --- website["`Website
     /var/www/html`"];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
-    nginx-internal ~~~ certs-nginx[TLS certs - /var/lib/acme] --> nginx-internal;
+    nginx-internal ~~~ certs-nginx["`TLS certs
+    /var/lib/acme`"] --> nginx-internal;
     cron --- acmetool;
     cron --- chatmail-metrics;
     cron --- expunge;
     chatmail-metrics --- website;
-    acmetool --> certs[TLS certs - /var/lib/acme];
+    acmetool --> certs["`TLS certs
+    /var/lib/acme`"];
     nginx --- |465|postfix;
     nginx --- |993|dovecot;
     autoconfig.xml --- postfix;
     autoconfig.xml --- dovecot;
     postfix --- echobot;
     postfix --- |10080,10081|filtermail;
-    postfix --- users[User data - home/vmail/mail];
+    postfix --- users["`User data
+    home/vmail/mail`"];
     postfix --- |doveauth.socket|doveauth;
     dovecot --- |doveauth.socket|doveauth;
     dovecot --- users;
