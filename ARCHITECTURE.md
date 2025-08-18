@@ -5,8 +5,10 @@ overview as of mid-August 2025:
 graph LR;
     cmdeploy --- sshd;
     letsencrypt --- |80|acmetool-redirector;
-    acmetool-redirector --- |443|nginx-right([nginx]);
-    nginx([nginx]) --- |8443|nginx-internal["`nginx
+    acmetool-redirector --- |443|nginx-right(["`nginx
+    (external)`"]);
+    nginx(["`nginx
+    (external)`"]) --- |8443|nginx-internal["`nginx
     (internal)`"];
     nginx-internal --- website["`Website
     /var/www/html`"];
