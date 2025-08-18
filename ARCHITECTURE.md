@@ -7,6 +7,7 @@ graph LR;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right(["`nginx
     (external)`"]);
+    nginx --- |465|postfix;
     nginx(["`nginx
     (external)`"]) --- |8443|nginx-internal["`nginx
     (internal)`"];
@@ -22,7 +23,6 @@ graph LR;
     chatmail-metrics --- website;
     acmetool --> certs[("`TLS certs
     /var/lib/acme`")];
-    nginx --- |465|postfix;
     nginx --- |993|dovecot;
     autoconfig.xml --- postfix;
     autoconfig.xml --- dovecot;
