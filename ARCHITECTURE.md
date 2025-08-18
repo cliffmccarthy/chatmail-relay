@@ -28,7 +28,7 @@ graph LR;
     dovecot --- |doveauth.socket|doveauth;
     dovecot --- users;
     dovecot --- |metadata.socket|chatmail-metadata;
-    dovecot --- certs-dovecot[TLS certs - /var/lib/acme];
+    dovecot ~~~ certs-dovecot[TLS certs - /var/lib/acme] --> dovecot;
     doveauth --- users;
     expunge --- users;
     chatmail-metadata --- iroh-relay;
