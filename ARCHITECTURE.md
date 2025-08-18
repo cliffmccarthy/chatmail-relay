@@ -3,16 +3,15 @@ overview as of mid-August 2025:
 
 ```mermaid
 graph TD;
-    cmdeploy --> sshd;
-    cron --> expunge;
-    cron --> acmetool;
-    cron --> chatmail-metrics;
-    chatmail-metrics --> Website:/var/www/html;
-    acmetool --> certs;
     letsencrypt --> acmetool-redirector;
     acmetool-redirector --> nginx;
     nginx --> |8443|nginx:internal;
     nginx:internal --> Website:/var/www/html;
+    cron --> chatmail-metrics;
+    cron --> acmetool;
+    cron --> expunge;
+    chatmail-metrics --> Website:/var/www/html;
+    acmetool --> certs;
     nginx --> certs;
     nginx:internal --> newemail.py;
     nginx --> |465|postfix;
@@ -32,6 +31,7 @@ graph TD;
     doveauth --> Users:/home/vmail/mail;
     expunge --> Users:/home/vmail/mail;
     chatmail-metadata --> iroh-relay;
+    cmdeploy --> sshd;
 ```
 
 (Arrows in this diagram do not have a specific formal meaning; they
