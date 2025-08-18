@@ -7,7 +7,7 @@ graph LR;
     letsencrypt --- |80|acmetool-redirector;
     acmetool-redirector --- |443|nginx-right[nginx];
     nginx --- |8443|nginx-internal[nginx - internal];
-    nginx-internal <-- certs-nginx[TLS certs - /var/lib/acme];
+    nginx-internal --- certs-nginx[TLS certs - /var/lib/acme];
     nginx-internal --- website[Website - /var/www/html];
     nginx-internal --- newemail.py;
     nginx-internal --- autoconfig.xml;
