@@ -39,8 +39,8 @@ graph LR;
     certs-nginx --> dovecot;
     style certs fill:#ff6;
     style certs-nginx fill:#ff6;
-    style nginx fill:#f86;
-    style nginx-right fill:#f86;
+    style nginx fill:#fc9;
+    style nginx-right fill:#fc9;
 ```
 
 The edges in this graph should not be taken too literally; they
