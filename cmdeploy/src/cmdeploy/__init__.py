@@ -20,7 +20,7 @@ from pyinfra.facts.systemd import SystemdEnabled
 from pyinfra.operations import apt, files, pip, server, systemd
 
 from .acmetool import AcmetoolDeployer
-from .deployer import Deployer
+from .deployer import Deployer, Deployment
 from .www import build_webpages, find_merge_conflict, get_paths
 
 
@@ -270,27 +270,21 @@ def _configure_opendkim(domain: str, dkim_selector: str = "dkim") -> bool:
 
 
 class OpendkimDeployer(Deployer):
-    def __init__(self, *, mail_domain, **kwargs):
-        super().__init__(**kwargs)
+    required_users = [("opendkim", None, ["opendkim"])]
+
+    def __init__(self, mail_domain):
         self.mail_domain = mail_domain
 
-    @staticmethod
-    def required_users():
-        return [
-            ("opendkim", None, ["opendkim"]),
-        ]
-
-    @staticmethod
-    def install_impl():
+    def install(self):
         apt.packages(
             name="apt install opendkim opendkim-tools",
             packages=["opendkim", "opendkim-tools"],
         )
 
-    def configure_impl(self):
+    def configure(self):
         self.need_restart = _configure_opendkim(self.mail_domain, "opendkim")
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable OpenDKIM",
             service="opendkim.service",
@@ -303,8 +297,7 @@ class OpendkimDeployer(Deployer):
 
 
 class UnboundDeployer(Deployer):
-    @staticmethod
-    def install_impl():
+    def install(self):
         # Run local DNS resolver `unbound`.
         # `resolvconf` takes care of setting up /etc/resolv.conf
         # to use 127.0.0.1 as the resolver.
@@ -333,7 +326,7 @@ class UnboundDeployer(Deployer):
 
         files.file("/usr/sbin/policy-rc.d", present=False)
 
-    def configure_impl(self):
+    def configure(self):
         server.shell(
             name="Generate root keys for validating DNSSEC",
             commands=[
@@ -341,7 +334,7 @@ class UnboundDeployer(Deployer):
             ],
         )
 
-    def activate_impl(self):
+    def activate(self):
         server.shell(
             name="Generate root keys for validating DNSSEC",
             commands=[
@@ -358,13 +351,13 @@ class UnboundDeployer(Deployer):
 
 
 class MtastsDeployer(Deployer):
-    def configure_impl(self):
+    def configure(self):
         # Remove configuration.
         files.file("/etc/mta-sts-daemon.yml", present=False)
         files.directory("/usr/local/lib/postfix-mta-sts-resolver", present=False)
         files.file("/etc/systemd/system/mta-sts-daemon.service", present=False)
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Stop MTA-STS daemon",
             service="mta-sts-daemon.service",
@@ -425,28 +418,23 @@ def _configure_postfix(config: Config, debug: bool = False) -> bool:
 
 
 class PostfixDeployer(Deployer):
-    def __init__(self, *, config, disable_mail, **kwargs):
-        super().__init__(**kwargs)
+    required_users = [("postfix", None, ["opendkim"]),]
+
+    def __init__(self, config, disable_mail):
         self.config = config
         self.disable_mail = disable_mail
 
-    @staticmethod
-    def required_users():
-        return [
-            ("postfix", None, ["opendkim"]),
-        ]
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         apt.packages(
             name="Install Postfix",
             packages="postfix",
         )
 
-    def configure_impl(self):
+    def configure(self):
         self.need_restart = _configure_postfix(self.config)
 
-    def activate_impl(self):
+    def activate(self):
         restart = False if self.disable_mail else self.need_restart
 
         systemd.service(
@@ -560,25 +548,23 @@ def _configure_dovecot(config: Config, debug: bool = False) -> bool:
 
 
 class DovecotDeployer(Deployer):
-    def __init__(self, *, config, disable_mail, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config, disable_mail):
         self.config = config
         self.disable_mail = disable_mail
         self.units = ["doveauth"]
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         arch = host.get_fact(facts.server.Arch)
         if not "dovecot.service" in host.get_fact(SystemdEnabled):
             _install_dovecot_package("core", arch)
             _install_dovecot_package("imapd", arch)
             _install_dovecot_package("lmtpd", arch)
 
-    def configure_impl(self):
+    def configure(self):
         _configure_remote_units(self.config.mail_domain, self.units)
         self.need_restart = _configure_dovecot(self.config)
 
-    def activate_impl(self):
+    def activate(self):
         _activate_remote_units(self.units)
 
         restart = False if self.disable_mail else self.need_restart
@@ -651,12 +637,10 @@ def _configure_nginx(config: Config, debug: bool = False) -> bool:
 
 
 class NginxDeployer(Deployer):
-    def __init__(self, *, config, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config):
         self.config = config
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         #
         # If we allow nginx to start up on install, it will grab port
         # 80, which then will block acmetool from listening on the port.
@@ -691,10 +675,10 @@ class NginxDeployer(Deployer):
 
         files.file("/usr/sbin/policy-rc.d", present=False)
 
-    def configure_impl(self):
+    def configure(self):
         self.need_restart = _configure_nginx(self.config)
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable nginx",
             service="nginx.service",
@@ -706,12 +690,10 @@ class NginxDeployer(Deployer):
 
 
 class WebsiteDeployer(Deployer):
-    def __init__(self, *, config, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config):
         self.config = config
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         files.directory(
             name="Ensure /var/www exists",
             path="/var/www",
@@ -721,7 +703,7 @@ class WebsiteDeployer(Deployer):
             present=True,
         )
 
-    def configure_impl(self):
+    def configure(self):
         www_path, src_dir, build_dir = get_paths(self.config)
         # if www_folder was set to a non-existing folder, skip upload
         if not www_path.is_dir():
@@ -739,8 +721,7 @@ class WebsiteDeployer(Deployer):
 
 
 class RspamdDeployer(Deployer):
-    @staticmethod
-    def install_impl():
+    def install(self):
         apt.packages(name="Remove rspamd", packages="rspamd", present=False)
 
 
@@ -760,13 +741,11 @@ def check_config(config):
 
 
 class TurnDeployer(Deployer):
-    def __init__(self, *, mail_domain, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, mail_domain):
         self.mail_domain = mail_domain
         self.units = ["turnserver"]
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         (url, sha256sum) = {
             "x86_64": (
                 "https://github.com/chatmail/chatmail-turn/releases/download/v0.3/chatmail-turn-x86_64-linux",
@@ -788,20 +767,18 @@ class TurnDeployer(Deployer):
                 ],
             )
 
-    def configure_impl(self):
+    def configure(self):
         _configure_remote_units(self.mail_domain, self.units)
 
-    def activate_impl(self):
+    def activate(self):
         _activate_remote_units(self.units)
 
 
 class MtailDeployer(Deployer):
-    def __init__(self, *, mtail_address, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, mtail_address):
         self.mtail_address = mtail_address
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         # Uninstall mtail package, we are going to install a static binary.
         apt.packages(name="Uninstall mtail", packages=["mtail"], present=False)
 
@@ -824,7 +801,7 @@ class MtailDeployer(Deployer):
             ],
         )
 
-    def configure_impl(self):
+    def configure(self):
         # Using our own systemd unit instead of `/usr/lib/systemd/system/mtail.service`.
         # This allows to read from journalctl instead of log files.
         files.template(
@@ -851,7 +828,7 @@ class MtailDeployer(Deployer):
         )
         self.need_restart = mtail_conf.changed
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable mtail",
             service="mtail.service",
@@ -863,12 +840,10 @@ class MtailDeployer(Deployer):
 
 
 class IrohDeployer(Deployer):
-    def __init__(self, *, enable_iroh_relay, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, enable_iroh_relay):
         self.enable_iroh_relay = enable_iroh_relay
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         (url, sha256sum) = {
             "x86_64": (
                 "https://github.com/n0-computer/iroh/releases/download/v0.35.0/iroh-relay-v0.35.0-x86_64-unknown-linux-musl.tar.gz",
@@ -896,7 +871,7 @@ class IrohDeployer(Deployer):
             #
             return True
 
-    def configure_impl(self):
+    def configure(self):
         systemd_unit = files.put(
             name="Upload iroh-relay systemd unit",
             src=importlib.resources.files(__package__).joinpath("iroh-relay.service"),
@@ -917,7 +892,7 @@ class IrohDeployer(Deployer):
         )
         self.need_restart |= iroh_config.changed
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable iroh-relay",
             service="iroh-relay.service",
@@ -929,7 +904,7 @@ class IrohDeployer(Deployer):
 
 
 class JournaldDeployer(Deployer):
-    def configure_impl(self):
+    def configure(self):
         journald_conf = files.put(
             name="Configure journald",
             src=importlib.resources.files(__package__).joinpath("journald.conf"),
@@ -940,7 +915,7 @@ class JournaldDeployer(Deployer):
         )
         self.need_restart = journald_conf.changed
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable journald",
             service="systemd-journald.service",
@@ -957,29 +932,26 @@ class EchobotDeployer(Deployer):
     # it needs to base its decision of whether to restart the service on
     # whether those two services were restarted.
     #
-    def __init__(self, *, mail_domain, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, mail_domain):
         self.mail_domain = mail_domain
         self.units = ["echobot"]
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         apt.packages(
             # required for setfacl for echobot
             name="Install acl",
             packages="acl",
         )
 
-    def configure_impl(self):
+    def configure(self):
         _configure_remote_units(self.mail_domain, self.units)
 
-    def activate_impl(self):
+    def activate(self):
         _activate_remote_units(self.units)
 
 
 class ChatmailVenvDeployer(Deployer):
-    def __init__(self, *, config, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, config):
         self.config = config
         self.units = (
             "filtermail",
@@ -992,33 +964,27 @@ class ChatmailVenvDeployer(Deployer):
             "chatmail-fsreport.timer",
         )
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         _install_remote_venv_with_chatmaild()
 
-    def configure_impl(self):
+    def configure(self):
         _configure_remote_venv_with_chatmaild(self.config)
         _configure_remote_units(self.config.mail_domain, self.units)
 
-    def activate_impl(self):
+    def activate(self):
         _activate_remote_units(self.units)
 
 
 class ChatmailDeployer(Deployer):
-    def __init__(self, *, mail_domain, **kwargs):
-        super().__init__(**kwargs)
-        self.mail_domain = mail_domain
-
-    @staticmethod
-    def required_users():
-        return [
+    required_users = [
             ("vmail", "vmail", None),
             ("echobot", None, None),
             ("iroh", None, None),
-        ]
+    ]
+    def __init__(self, mail_domain):
+        self.mail_domain = mail_domain
 
-    @staticmethod
-    def install_impl():
+    def install(self):
         # Remove OBS repository key that is no longer used.
         files.file("/etc/apt/keyrings/obs-home-deltachat.gpg", present=False)
 
@@ -1047,7 +1013,7 @@ class ChatmailDeployer(Deployer):
             packages=["cron"],
         )
 
-    def configure_impl(self):
+    def configure(self):
         # This file is used by auth proxy.
         # https://wiki.debian.org/EtcMailName
         server.shell(
@@ -1059,19 +1025,36 @@ class ChatmailDeployer(Deployer):
 
 
 class FcgiwrapDeployer(Deployer):
-    @staticmethod
-    def install_impl():
+    def install(self):
         apt.packages(
             name="Install fcgiwrap",
             packages=["fcgiwrap"],
         )
 
-    def activate_impl(self):
+    def activate(self):
         systemd.service(
             name="Start and enable fcgiwrap",
             service="fcgiwrap.service",
             running=True,
             enabled=True,
+        )
+
+
+class GithashDeployer(Deployer):
+    def activate(self):
+        try:
+            git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode()
+        except Exception:
+            git_hash = "unknown\n"
+        try:
+            git_diff = subprocess.check_output(["git", "diff"]).decode()
+        except Exception:
+            git_diff = ""
+        files.put(
+            name="Upload chatmail relay git commiit hash",
+            src=StringIO(git_hash + git_diff),
+            dest="/etc/chatmail-version",
+            mode="700",
         )
 
 
@@ -1120,70 +1103,34 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
 
     tls_domains = [mail_domain, f"mta-sts.{mail_domain}", f"www.{mail_domain}"]
 
-    chatmail_deployer = ChatmailDeployer(mail_domain=mail_domain)
-    journald_deployer = JournaldDeployer()
-    unbound_deployer = UnboundDeployer()
-    turn_deployer = TurnDeployer(mail_domain=mail_domain)
-    iroh_deployer = IrohDeployer(enable_iroh_relay=config.enable_iroh_relay)
-
-    # Deploy acmetool to have TLS certificates.
-    acmetool_deployer = AcmetoolDeployer(email=config.acme_email, domains=tls_domains)
-
-    website_deployer = WebsiteDeployer(config=config)
-    chatmail_venv_deployer = ChatmailVenvDeployer(config=config)
-    mtasts_deployer = MtastsDeployer()
-    opendkim_deployer = OpendkimDeployer(mail_domain=mail_domain)
-
-    # Dovecot should be started before Postfix
-    # because it creates authentication socket
-    # required by Postfix.
-    dovecot_deployer = DovecotDeployer(config=config, disable_mail=disable_mail)
-    postfix_deployer = PostfixDeployer(config=config, disable_mail=disable_mail)
-
-    fcgiwrap_deployer = FcgiwrapDeployer()
-    nginx_deployer = NginxDeployer(config=config)
-    rspamd_deployer = RspamdDeployer()
-    echobot_deployer = EchobotDeployer(mail_domain=mail_domain)
-    mtail_deployer = MtailDeployer(mtail_address=config.mtail_address)
 
     all_deployers = [
-        chatmail_deployer,
-        journald_deployer,
-        unbound_deployer,
-        turn_deployer,
-        iroh_deployer,
-        acmetool_deployer,
-        website_deployer,
-        chatmail_venv_deployer,
-        mtasts_deployer,
-        opendkim_deployer,
-        dovecot_deployer,
-        postfix_deployer,
-        fcgiwrap_deployer,
-        nginx_deployer,
-        rspamd_deployer,
-        echobot_deployer,
-        mtail_deployer,
+        ChatmailDeployer(mail_domain=mail_domain),
+        JournaldDeployer(),
+        UnboundDeployer(),
+        TurnDeployer(mail_domain=mail_domain),
+        IrohDeployer(enable_iroh_relay=config.enable_iroh_relay),
+        AcmetoolDeployer(email=config.acme_email, domains=tls_domains),
+
+        WebsiteDeployer(config=config),
+        ChatmailVenvDeployer(config=config),
+        MtastsDeployer(),
+        OpendkimDeployer(mail_domain=mail_domain),
+
+        # Dovecot should be started before Postfix
+        # because it creates authentication socket
+        # required by Postfix.
+        DovecotDeployer(config=config, disable_mail=disable_mail),
+        PostfixDeployer(config=config, disable_mail=disable_mail),
+        FcgiwrapDeployer(),
+        NginxDeployer(config=config),
+        RspamdDeployer(),
+        EchobotDeployer(mail_domain=mail_domain),
+        MtailDeployer(mtail_address=config.mtail_address),
+        GithashDeployer(),
     ]
 
-    #
-    # Create all groups before users, because some users reference groups
-    # from other classes.
-    #
-    for deployer in all_deployers:
-        deployer.create_groups()
-
-    for deployer in all_deployers:
-        deployer.create_users()
-
-    for deployer in all_deployers:
-        deployer.install()
-
-    for deployer in all_deployers:
-        deployer.configure()
-
-    for deployer in all_deployers:
-        deployer.activate()
+    Deployment().perform_stages(all_deployers)
 
     files.directory(
         name="Ensure old logs on disk are deleted",
@@ -1191,17 +1138,3 @@ def deploy_chatmail(config_path: Path, disable_mail: bool) -> None:
         present=False,
     )
 
-    try:
-        git_hash = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode()
-    except Exception:
-        git_hash = "unknown\n"
-    try:
-        git_diff = subprocess.check_output(["git", "diff"]).decode()
-    except Exception:
-        git_diff = ""
-    files.put(
-        name="Upload chatmail relay git commiit hash",
-        src=StringIO(git_hash + git_diff),
-        dest="/etc/chatmail-version",
-        mode="700",
-    )
